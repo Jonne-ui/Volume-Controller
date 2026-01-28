@@ -2,8 +2,6 @@ from __future__ import print_function
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 import keyboard
 import json
-import time
-import math
 
 volumeUp = "ctrl+å"
 volumeDown = "ctrl+ä"
@@ -35,14 +33,13 @@ def changeAppAudio(appName, volumeChange):
             print(f"volume: {currentAppVol.GetMasterVolume()}")
 
 def increaseVolume():
-    changeAppAudio("Spotify.exe", 0.1)
+    changeAppAudio("Spotify.exe", 0.05)
 
 def decreaseVolume():
-    changeAppAudio("Spotify.exe", -0.1)
+    changeAppAudio("Spotify.exe", -0.05)
 
 keyboard.add_hotkey(volumeUp, increaseVolume)
 keyboard.add_hotkey(volumeDown, decreaseVolume)
 keyboard.wait()
 
 readHotkeys()
-changeAppAudio("Spotify.exe")

@@ -1,10 +1,6 @@
 {
     "Spotify.exe": {
-        "volumeUp": "ctrl+å",
-        "volumeDown": "ctrl+ä" 
-            },
-    "firefox.exe": {
-        "volumeUp": "ctrl+o",
-        "volumeDown": "ctrl+l" 
-            }
+        "VolumeUp": "ctrl+alt+a",
+        "VolumeDown": "ctrl+alt+s"
+    }
 }

@@ -59,8 +59,49 @@ infoText = Label(root, text="Select an app to set Hotkey", font='Helvetica 14 bo
 infoText.grid(row=0, column=0, padx=20, pady=5)
 
 #Get active List item
-hkEntry = Entry(root)
+hkEntry = Entry(root, width=30, cursor="arrow")
 hkEntry.grid(row=1, column=1)
+
+hotkey = []
+
+def normalize(key):
+    return {
+        "Control_L": "Ctrl",
+        "Control_R": "Ctrl",
+        "Shift_L": "Shift",
+        "Shift_R": "Shift",
+        "Alt_L": "Alt",
+        "Alt_R": "Alt",
+    }.get(key, key)
+
+def reset_field():
+    hotkey.clear()
+    hkEntry.delete(0, "end")
+
+def key_handler(event):
+    # BACKSPACE = reset
+    if event.keysym in {"BackSpace", "Escape"}:
+        reset_field()
+        return "break"
+
+    if len(hotkey) >= 3:
+        return "break"
+
+    key = normalize(event.keysym)
+
+    if key in hotkey:
+        return "break"
+
+    # allow modifiers or one normal key
+    if key.isalnum() or key in {"Ctrl", "Shift", "Alt"}:
+        hotkey.append(key)
+        hkEntry.delete(0, "end")
+        hkEntry.insert("end", "+".join(hotkey))
+        print(hotkey)
+
+    return "break"
+
+hkEntry.bind("<Key>", key_handler)
 
 #Set hotkey in hotkeys.json
 #  "!!!!!!fix utf-8!!!!!!"

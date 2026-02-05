@@ -3,15 +3,36 @@ from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 import keyboard
 import json
 import sys
-import time
 from tkinter import *
 from tkinter import ttk
+import pystray
+from PIL import Image
 
 #Create window
 root = Tk()
 root.title("Volume controller")
 root.geometry("240x210")
 root.resizable(False, False)
+
+def minimizeToTray():
+    root.withdraw()
+    image = Image.open("Images/favicon.ico")
+    menu = (pystray.MenuItem('Show', showApp),
+            pystray.MenuItem('Exit', exitApp)
+            )
+    icon = pystray.Icon("Name", image, "Volume controller", menu)
+    icon.run()
+
+def exitApp(icon):
+    icon.stop()
+    root.destroy()
+
+def showApp(icon):
+    icon.stop()
+    root.after(0, root.deiconify)
+
+
+root.protocol("WM_DELETE_WINDOW", minimizeToTray)
 
 #Get audio sessions
 sessions = AudioUtilities.GetAllSessions()
@@ -91,7 +112,7 @@ volUpText.grid(row=2, column=0)
 hkEntry = Entry(root, width=24, cursor="arrow")
 hkEntry.grid(row=3, column=0, pady=5)
 
-resetBtn = Button(root, text="test", command=resetHotkeyUp)
+resetBtn = Button(root, text="Reset", command=resetHotkeyUp)
 resetBtn.grid(row=3, column=1, padx=(0, 25))
 
 #Volume Down entry
@@ -101,7 +122,7 @@ volDownText.grid(row=4, column=0)
 volDown = Entry(root, width=24, cursor="arrow")
 volDown.grid(row=5, column=0, pady=5)
 
-resetBtn2 = Button(root, text="test", command=resetHotkeyDown)
+resetBtn2 = Button(root, text="Reset", command=resetHotkeyDown)
 resetBtn2.grid(row=5, column=1, padx=(0, 25))
 
 

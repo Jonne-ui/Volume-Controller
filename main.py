@@ -3,15 +3,19 @@ from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 import keyboard
 import json
 import sys
+import pystray
 from tkinter import *
 from tkinter import ttk
-import pystray
 from PIL import Image
 
 #Create window
+WINDOW_WIDTH = 240
+
 root = Tk()
 root.title("Volume controller")
-root.geometry("240x210")
+img = PhotoImage(file="Images/ico.png")
+root.iconphoto(True, img)
+root.geometry("240x295")
 root.resizable(False, False)
 
 def minimizeToTray():
@@ -87,7 +91,7 @@ def resetHotkeyUp():
     
     with open('hotkeys.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
+    reloadHotkeys()
 def resetHotkeyDown():
     reset_field_down()
     selectedApp = getSelectedApp()
@@ -100,33 +104,40 @@ def resetHotkeyDown():
     
     with open('hotkeys.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
+    reloadHotkeys()
 #Info Text
-infoText = Label(root, text="Select an app to set Hotkey", font='Helvetica 12 bold')
+infoText = Label(root, text="Select an app to set Hotkey", font=('Segoe UI', 12, 'bold'))
 infoText.grid(row=0, column=0, columnspan=2, padx=15, pady=5)
 
 #Volume Up entry
-volUpText = Label(root, text="Volume Up hotkey:")
+volUpText = Label(root, text="Volume Up:", font=('Segoe UI', 12, 'bold'))
 volUpText.grid(row=2, column=0)
 
 hkEntry = Entry(root, width=24, cursor="arrow")
-hkEntry.grid(row=3, column=0, pady=5)
+hkEntry.grid(row=3, column=0, padx=20, pady=5)
 
-resetBtn = Button(root, text="Reset", command=resetHotkeyUp)
-resetBtn.grid(row=3, column=1, padx=(0, 25))
+resetBtn = Button(root, text="↺", command=resetHotkeyUp)
+resetBtn.grid(row=6, column=1, padx=(0, 25), pady=8)
 
 #Volume Down entry
-volDownText = Label(root, text="Volume Down hotkey:")
+volDownText = Label(root, text="Volume Down:",font=('Segoe UI', 12, 'bold'))
 volDownText.grid(row=4, column=0)
 
 volDown = Entry(root, width=24, cursor="arrow")
 volDown.grid(row=5, column=0, pady=5)
 
-resetBtn2 = Button(root, text="Reset", command=resetHotkeyDown)
-resetBtn2.grid(row=5, column=1, padx=(0, 25))
+currentKeyBindUp = StringVar()
+currentKeyBindDown = StringVar()
 
+currentBindUp = Label(root, textvariable=currentKeyBindUp, justify='left', wraplength=WINDOW_WIDTH/2, font=('Segoe UI', 8))
+currentBindUp.grid(row=6, column=0, sticky='w', padx=(17,0), pady=(5,0))
+currentBindDown = Label(root, textvariable=currentKeyBindDown, justify='left', wraplength=WINDOW_WIDTH/2, font=('Segoe UI', 8))
+currentBindDown.grid(row=7, column=0, sticky='w', padx=(17,0), pady=(5,0))
 
-root.columnconfigure(0, weight=1)
+resetBtn2 = Button(root, text="↺", command=resetHotkeyDown)
+resetBtn2.grid(row=7, column=1, padx=(0, 25), pady=8)
+
+root.grid_columnconfigure(1, weight=1)
 
 hotkeyUp = []
 hotkeyDown = []
@@ -152,6 +163,7 @@ def reset_field_down():
 def reloadHotkeys():
     keyboard.unhook_all()
     readHotkeys()
+    showCurrentHotkey()
 
 #Set hotkey in hotkeys.json
 #  "!!!!!!fix utf-8!!!!!!"
@@ -162,6 +174,7 @@ def setHotkey(selectedApp):
         "VolumeUp": selectedHotkeyUp,
         "VolumeDown": selectedHotkeyDown
     }}
+
     with open('hotkeys.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     data.update(newHotkey)
@@ -170,6 +183,20 @@ def setHotkey(selectedApp):
         json.dump(data, f, ensure_ascii=False, indent=4)
     #print("Added:", newHotkey.keys())
     reloadHotkeys()
+
+def showCurrentHotkey():
+    selectedApp = getSelectedApp()
+    
+    with open('hotkeys.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    
+    appData = data.get(selectedApp, {"VolumeUp": "", "VolumeDown": ""})
+    upKey = appData.get('VolumeUp', '')
+    downKey = appData.get('VolumeDown', '')
+
+    currentKeyBindUp.set(f'current keybind 🡅 : {upKey} ')
+    currentKeyBindDown.set(f'current keybind 🡇 : {downKey} ')
+
 def key_handler_up(event):
     # BACKSPACE = reset
     if event.keysym in {"BackSpace", "Escape"}:
@@ -222,7 +249,7 @@ hkEntry.bind("<Key>", key_handler_up)
 volDown.bind("<Key>", key_handler_down)
 
 
-#List all apps with audio
+#List all apps with audio and show selected app keybind
 Apps = []
 for session in sessions:
     if session.Process and session.Process.name():
@@ -230,6 +257,7 @@ for session in sessions:
         opt = StringVar(value=session.Process.name())
 
 openApps = ttk.Combobox(root, state='readonly', values=Apps)
+openApps.bind("<<ComboboxSelected>>", lambda e: showCurrentHotkey())
 openApps.current(0)
 #openApps.set("Select an app")
 openApps.grid(row=1, column=0, pady=20)
@@ -249,5 +277,5 @@ root.bind("<Button-1>", takeFocus)
 root.bind("<Control-Alt-BackSpace>", sys.exit)
 
 readHotkeys()
-
+showCurrentHotkey()
 root.mainloop()

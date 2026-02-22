@@ -1,6 +1,18 @@
 {
+    "firefox.exe": {
+        "VolumeUp": "Ctrl+Alt+Up",
+        "VolumeDown": "Ctrl+Alt+Down"
+    },
     "Spotify.exe": {
-        "VolumeUp": "ctrl+alt+a",
-        "VolumeDown": "ctrl+alt+s"
+        "VolumeUp": "",
+        "VolumeDown": ""
+    },
+    "steam.exe": {
+        "VolumeUp": "",
+        "VolumeDown": ""
+    },
+    "wallpaper32.exe": {
+        "VolumeUp": "Ctrl+Alt+period",
+        "VolumeDown": "Alt+Ctrl+comma"
     }
 }

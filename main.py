@@ -19,19 +19,24 @@ if not os.path.exists(HOTKEYS_PATH):
         json.dump({}, f, ensure_ascii=False, indent=4)
 
 
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.dirname(__file__), relative_path)
+
 #Create window
 WINDOW_WIDTH = 240
 
 root = Tk()
 root.title("Volume controller")
-img = PhotoImage(file="Images/ico.png")
-root.iconphoto(True, img)
+root.iconbitmap(resource_path("Images/favicon.ico"))
 root.geometry("240x295")
 root.resizable(False, False)
 
+
 def minimizeToTray():
     root.withdraw()
-    image = Image.open("Images/favicon.ico")
+    image = Image.open(resource_path("Images/favicon.ico"))
     menu = (pystray.MenuItem('Show', showApp),
             pystray.MenuItem('Exit', exitApp)
             )

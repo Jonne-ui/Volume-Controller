@@ -4,9 +4,20 @@ import keyboard
 import json
 import sys
 import pystray
+import os
 from tkinter import *
 from tkinter import ttk
 from PIL import Image
+
+appdataPath = os.getenv('APPDATA')
+HOTKEYS_PATH = os.path.join(appdataPath, 'VolumeController', 'hotkeys.json')
+
+os.makedirs(os.path.join(appdataPath, 'VolumeController'), exist_ok=True)
+
+if not os.path.exists(HOTKEYS_PATH):
+    with open(HOTKEYS_PATH, 'w', encoding='utf-8') as f:
+        json.dump({}, f, ensure_ascii=False, indent=4)
+
 
 #Create window
 WINDOW_WIDTH = 240
@@ -67,7 +78,7 @@ def decreaseVolume(appName):
     changeAppAudio(appName, -0.05)
      
 def readHotkeys():
-    with open('hotkeys.json', 'r') as hotkeys:
+    with open(HOTKEYS_PATH, 'r') as hotkeys:
         binds = json.load(hotkeys)
 
     for app_name, actions in binds.items():
@@ -83,28 +94,30 @@ def resetHotkeyUp():
     reset_field_up()
     selectedApp = getSelectedApp()
     
-    with open('hotkeys.json', 'r', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
     if selectedApp in data:
         data[selectedApp]["VolumeUp"] = ""
     
-    with open('hotkeys.json', 'w', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     reloadHotkeys()
+
 def resetHotkeyDown():
     reset_field_down()
     selectedApp = getSelectedApp()
     
-    with open('hotkeys.json', 'r', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
     if selectedApp in data:
         data[selectedApp]["VolumeDown"] = ""
     
-    with open('hotkeys.json', 'w', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     reloadHotkeys()
+
 #Info Text
 infoText = Label(root, text="Select an app to set Hotkey", font=('Segoe UI', 12, 'bold'))
 infoText.grid(row=0, column=0, columnspan=2, padx=15, pady=5)
@@ -175,11 +188,11 @@ def setHotkey(selectedApp):
         "VolumeDown": selectedHotkeyDown
     }}
 
-    with open('hotkeys.json', 'r', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
     data.update(newHotkey)
 
-    with open('hotkeys.json', 'w', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     #print("Added:", newHotkey.keys())
     reloadHotkeys()
@@ -187,7 +200,7 @@ def setHotkey(selectedApp):
 def showCurrentHotkey():
     selectedApp = getSelectedApp()
     
-    with open('hotkeys.json', 'r', encoding='utf-8') as f:
+    with open(HOTKEYS_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
     appData = data.get(selectedApp, {"VolumeUp": "", "VolumeDown": ""})

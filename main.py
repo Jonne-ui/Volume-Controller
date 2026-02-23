@@ -1,4 +1,3 @@
-from __future__ import print_function
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 import keyboard
 import json
@@ -37,7 +36,7 @@ root.resizable(False, False)
 def minimizeToTray():
     root.withdraw()
     image = Image.open(resource_path("Images/favicon.ico"))
-    menu = (pystray.MenuItem('Show', showApp),
+    menu = (pystray.MenuItem('Show', showApp, default=True),
             pystray.MenuItem('Exit', exitApp)
             )
     icon = pystray.Icon("Name", image, "Volume controller", menu)
@@ -224,13 +223,18 @@ def key_handler_up(event):
     if len(hotkeyUp) >= 3:
         return "break"
 
-    key = normalize(event.keysym)
+    key = normalize(event.char) if event.char.strip() else normalize(event.keysym)
 
+    try:
+        key.encode('ascii')
+    except UnicodeEncodeError:
+        return "break"
+    
     if key in hotkeyUp:
         return "break"
 
     # allow modifiers or one normal key
-    if key.isalnum() or key in {"Ctrl", "Shift", "Alt"}:
+    if (key.isalnum() and key.isascii()) or key in {"Ctrl", "Shift", "Alt"}:
         hotkeyUp.append(key)
         hkEntry.delete(0, "end")
         hkEntry.insert("end", "+".join(hotkeyUp))
@@ -248,13 +252,18 @@ def key_handler_down(event):
     if len(hotkeyDown) >= 3:
         return "break"
 
-    key = normalize(event.keysym)
+    key = normalize(event.char) if event.char.strip() else normalize(event.keysym)
+
+    try:
+        key.encode('ascii')
+    except UnicodeEncodeError:
+        return "break"
 
     if key in hotkeyDown:
         return "break"
 
     # allow modifiers or one normal key
-    if key.isalnum() or key in {"Ctrl", "Shift", "Alt"}:
+    if (key.isalnum() and key.isascii()) or key in {"Ctrl", "Shift", "Alt"}:
         hotkeyDown.append(key)
         volDown.delete(0, "end")
         volDown.insert("end", "+".join(hotkeyDown))

@@ -4,12 +4,15 @@ import json
 import sys
 import pystray
 import os
+import winreg
 from tkinter import *
 from tkinter import ttk
 from PIL import Image
 
 appdataPath = os.getenv('APPDATA')
 HOTKEYS_PATH = os.path.join(appdataPath, 'VolumeController', 'hotkeys.json')
+STARTUP_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
+APP_NAME = "VolumeController"
 
 os.makedirs(os.path.join(appdataPath, 'VolumeController'), exist_ok=True)
 
@@ -22,6 +25,43 @@ def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.dirname(__file__), relative_path)
+
+def is_startup_enabled():
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_KEY, 0, winreg.KEY_READ) as key:
+            winreg.QueryValueEx(key, APP_NAME)
+            return True
+    except FileNotFoundError:
+        return False
+
+def enable_startup():
+    exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_KEY, 0, winreg.KEY_SET_VALUE) as key:
+        winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, f'"{exe_path}"')
+
+def disable_startup():
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_KEY, 0, winreg.KEY_SET_VALUE) as key:
+            winreg.DeleteValue(key, APP_NAME)
+    except FileNotFoundError:
+        pass
+
+def toggle_startup(icon, item):
+    if is_startup_enabled():
+        disable_startup()
+    else:
+        enable_startup()
+
+def build_tray_menu():
+    return pystray.Menu(
+        pystray.MenuItem('Show', showApp, default=True),
+        pystray.MenuItem(
+            'Run at startup',
+            toggle_startup,
+            checked=lambda item: is_startup_enabled()
+        ),
+        pystray.MenuItem('Exit', exitApp)
+    )
 
 #Create window
 WINDOW_WIDTH = 240
@@ -36,10 +76,7 @@ root.resizable(False, False)
 def minimizeToTray():
     root.withdraw()
     image = Image.open(resource_path("Images/favicon.ico"))
-    menu = (pystray.MenuItem('Show', showApp, default=True),
-            pystray.MenuItem('Exit', exitApp)
-            )
-    icon = pystray.Icon("Name", image, "Volume controller", menu)
+    icon = pystray.Icon("Name", image, "Volume controller", build_tray_menu())
     icon.run()
 
 def exitApp(icon):
@@ -182,8 +219,6 @@ def reloadHotkeys():
     readHotkeys()
     showCurrentHotkey()
 
-#Set hotkey in hotkeys.json
-#  "!!!!!!fix utf-8!!!!!!"
 def setHotkey(selectedApp):
     selectedHotkeyUp = hkEntry.get()
     selectedHotkeyDown = volDown.get()
@@ -198,7 +233,6 @@ def setHotkey(selectedApp):
 
     with open(HOTKEYS_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-    #print("Added:", newHotkey.keys())
     reloadHotkeys()
 
 def showCurrentHotkey():
@@ -215,7 +249,6 @@ def showCurrentHotkey():
     currentKeyBindDown.set(f'current keybind 🡇 : {downKey} ')
 
 def key_handler_up(event):
-    # BACKSPACE = reset
     if event.keysym in {"BackSpace", "Escape"}:
         reset_field_up()
         return "break"
@@ -233,18 +266,15 @@ def key_handler_up(event):
     if key in hotkeyUp:
         return "break"
 
-    # allow modifiers or one normal key
     if (key.isalnum() and key.isascii()) or key in {"Ctrl", "Shift", "Alt"}:
         hotkeyUp.append(key)
         hkEntry.delete(0, "end")
         hkEntry.insert("end", "+".join(hotkeyUp))
-        #print(hotkeyUp)
         setHotkey(getSelectedApp())
 
     return "break"
 
 def key_handler_down(event):
-    # BACKSPACE = reset
     if event.keysym in {"BackSpace", "Escape"}:
         reset_field_down()
         return "break"
@@ -262,12 +292,10 @@ def key_handler_down(event):
     if key in hotkeyDown:
         return "break"
 
-    # allow modifiers or one normal key
     if (key.isalnum() and key.isascii()) or key in {"Ctrl", "Shift", "Alt"}:
         hotkeyDown.append(key)
         volDown.delete(0, "end")
         volDown.insert("end", "+".join(hotkeyDown))
-        #print(hotkeyDown)
         setHotkey(getSelectedApp())
 
     return "break"
@@ -286,7 +314,6 @@ for session in sessions:
 openApps = ttk.Combobox(root, state='readonly', values=Apps)
 openApps.bind("<<ComboboxSelected>>", lambda e: showCurrentHotkey())
 openApps.current(0)
-#openApps.set("Select an app")
 openApps.grid(row=1, column=0, pady=20)
 
 #Get selected app

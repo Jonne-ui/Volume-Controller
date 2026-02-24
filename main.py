@@ -163,6 +163,7 @@ def resetHotkeyDown():
 infoText = Label(root, text="Select an app to set Hotkey", font=('Segoe UI', 12, 'bold'))
 infoText.grid(row=0, column=0, columnspan=2, padx=15, pady=5)
 
+
 #Volume Up entry
 volUpText = Label(root, text="Volume Up:", font=('Segoe UI', 12, 'bold'))
 volUpText.grid(row=2, column=0)
@@ -304,17 +305,35 @@ hkEntry.bind("<Key>", key_handler_up)
 volDown.bind("<Key>", key_handler_down)
 
 
-#List all apps with audio and show selected app keybind
+#List all apps with audio
 Apps = []
 for session in sessions:
     if session.Process and session.Process.name():
         Apps.append(session.Process.name())
         opt = StringVar(value=session.Process.name())
 
-openApps = ttk.Combobox(root, state='readonly', values=Apps)
-openApps.bind("<<ComboboxSelected>>", lambda e: showCurrentHotkey())
-openApps.current(0)
-openApps.grid(row=1, column=0, pady=20)
+    openApps = ttk.Combobox(root, state='readonly', values=Apps)
+    openApps.bind("<<ComboboxSelected>>", lambda e: showCurrentHotkey())
+    openApps.current(0)
+    openApps.grid(row=1, column=0, pady=20)
+
+
+def refreshApps():
+    global sessions
+    sessions = AudioUtilities.GetAllSessions()
+    
+    Apps.clear()
+    for session in sessions:
+        if session.Process and session.Process.name():
+            Apps.append(session.Process.name())
+    
+    openApps['values'] = Apps
+
+    if Apps:
+        openApps.current(0)
+
+refreshMenu = Button(root, text="↺", command=refreshApps)
+refreshMenu.grid(row=1, column=1, sticky='w')
 
 #Get selected app
 def getSelectedApp():

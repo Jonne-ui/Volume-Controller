@@ -5,6 +5,8 @@ import sys
 import pystray
 import os
 import winreg
+#import ttkthemes
+import sv_ttk
 from tkinter import *
 from tkinter import ttk
 from PIL import Image
@@ -70,8 +72,14 @@ root = Tk()
 root.withdraw()
 root.title("Volume controller")
 root.iconbitmap(resource_path("Images/favicon.ico"))
-root.geometry("240x295")
+root.geometry("260x320")
 root.resizable(False, False)
+
+root.grid_columnconfigure(1, weight=1)
+root.grid_columnconfigure(1, minsize=40)
+#style = ttk.Style(root)
+sv_ttk.set_theme('dark')
+#root.tk.call('tk', 'scaling', 1.0)
 
 def minimizeToTray():
     root.withdraw()
@@ -165,39 +173,37 @@ def resetHotkeyDown():
     reloadHotkeys()
 
 #Info Text
-infoText = Label(root, text="Select an app to set Hotkey", font=('Segoe UI', 12, 'bold'))
-infoText.grid(row=0, column=0, columnspan=2, padx=15, pady=5)
-
+infoText = Label(root, text="Select an app to set Hotkey", font=('Segoe UI', 13, 'bold'))
+infoText.grid(row=0, column=0, columnspan=2, padx=15, pady=(3,0))
 
 #Volume Up entry
-volUpText = Label(root, text="Volume Up:", font=('Segoe UI', 12, 'bold'))
-volUpText.grid(row=2, column=0)
+volUpText = ttk.Label(root, text="Volume Up:", font=('Segoe UI', 10, 'bold'))
+volUpText.grid(row=2, column=0, pady=(0,5))
 
-hkEntry = Entry(root, width=24, cursor="arrow")
-hkEntry.grid(row=3, column=0, padx=20, pady=5)
-
-resetBtn = Button(root, text="↺", command=resetHotkeyUp)
-resetBtn.grid(row=6, column=1, padx=(0, 25), pady=8)
+hkEntry = ttk.Entry(root, width=20, cursor="arrow")
+hkEntry.grid(row=3, column=0, padx=(13,0), pady=(0,10))
 
 #Volume Down entry
-volDownText = Label(root, text="Volume Down:",font=('Segoe UI', 12, 'bold'))
-volDownText.grid(row=4, column=0)
+volDownText = Label(root, text="Volume Down:", font=('Segoe UI', 10, 'bold'))
+volDownText.grid(row=4, column=0, pady=(0,3))
 
-volDown = Entry(root, width=24, cursor="arrow")
-volDown.grid(row=5, column=0, pady=5)
+volDown = ttk.Entry(root, width=20, cursor="arrow")
+volDown.grid(row=5, column=0, padx=(13,0))
+
+#reset
+resetBtn = ttk.Button(root, text="↺", command=resetHotkeyUp)
+resetBtn.grid(row=6, column=1, sticky='e', padx=(0,12), pady=8)
+
+resetBtn2 = ttk.Button(root, text="↺", command=resetHotkeyDown)
+resetBtn2.grid(row=7, column=1, sticky='e', padx=(0,12), pady=8)
 
 currentKeyBindUp = StringVar()
 currentKeyBindDown = StringVar()
 
-currentBindUp = Label(root, textvariable=currentKeyBindUp, justify='left', wraplength=WINDOW_WIDTH/2, font=('Segoe UI', 8))
-currentBindUp.grid(row=6, column=0, sticky='w', padx=(17,0), pady=(5,0))
-currentBindDown = Label(root, textvariable=currentKeyBindDown, justify='left', wraplength=WINDOW_WIDTH/2, font=('Segoe UI', 8))
-currentBindDown.grid(row=7, column=0, sticky='w', padx=(17,0), pady=(5,0))
-
-resetBtn2 = Button(root, text="↺", command=resetHotkeyDown)
-resetBtn2.grid(row=7, column=1, padx=(0, 25), pady=8)
-
-root.grid_columnconfigure(1, weight=1)
+currentBindUp = ttk.Label(root, textvariable=currentKeyBindUp, justify='left', wraplength=WINDOW_WIDTH/2, font=('Segoe UI', 10))
+currentBindUp.grid(row=6, column=0, sticky='w', padx=(13,0), pady=(5,0))
+currentBindDown = ttk.Label(root, textvariable=currentKeyBindDown, justify='left', wraplength=WINDOW_WIDTH/2, font=('Segoe UI', 10))
+currentBindDown.grid(row=7, column=0, sticky='w', padx=(13,0), pady=(5,0))
 
 hotkeyUp = []
 hotkeyDown = []
@@ -309,6 +315,12 @@ def key_handler_down(event):
 hkEntry.bind("<Key>", key_handler_up)
 volDown.bind("<Key>", key_handler_down)
 
+def onAppSelected(e):
+    reset_field_up()
+    reset_field_down()
+    showCurrentHotkey()
+    openApps.selection_clear()
+    root.focus_set()
 
 #List all apps with audio
 Apps = []
@@ -317,12 +329,15 @@ for session in sessions:
         Apps.append(session.Process.name())
         opt = StringVar(value=session.Process.name())
 
-    openApps = ttk.Combobox(root, state='readonly', values=Apps)
-    openApps.bind("<<ComboboxSelected>>", lambda e: showCurrentHotkey())
+    comboFrame = ttk.Frame(root)
+    comboFrame.grid(row=1, column=0, columnspan=2, pady=20)
+
+    openApps = ttk.Combobox(comboFrame, state='readonly', values=Apps, width=18)
+    openApps.bind("<<ComboboxSelected>>", onAppSelected)
 
     if Apps:
         openApps.current(0)
-    openApps.grid(row=1, column=0, pady=20)
+    openApps.grid(row=0, column=0)
 
 
 def refreshApps():
@@ -339,8 +354,8 @@ def refreshApps():
     if Apps:
         openApps.current(0)
 
-refreshMenu = Button(root, text="↺", command=refreshApps)
-refreshMenu.grid(row=1, column=1, sticky='w')
+refreshMenu = ttk.Button(comboFrame, text="↺", command=refreshApps)
+refreshMenu.grid(row=0, column=1, padx=(5,0))
 
 #Get selected app
 def getSelectedApp():

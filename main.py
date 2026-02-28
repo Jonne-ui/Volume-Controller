@@ -37,7 +37,7 @@ def is_startup_enabled():
 def enable_startup():
     exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, STARTUP_KEY, 0, winreg.KEY_SET_VALUE) as key:
-        winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, f'"{exe_path}"')
+        winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, f'"{exe_path}" --minimized')
 
 def disable_startup():
     try:
@@ -67,17 +67,22 @@ def build_tray_menu():
 WINDOW_WIDTH = 240
 
 root = Tk()
+root.withdraw()
 root.title("Volume controller")
 root.iconbitmap(resource_path("Images/favicon.ico"))
 root.geometry("240x295")
 root.resizable(False, False)
-
 
 def minimizeToTray():
     root.withdraw()
     image = Image.open(resource_path("Images/favicon.ico"))
     icon = pystray.Icon("Name", image, "Volume controller", build_tray_menu())
     icon.run()
+
+if '--minimized' in sys.argv:
+    root.after(100, minimizeToTray)
+else:
+    root.deiconify()
 
 def exitApp(icon):
     icon.stop()
@@ -314,7 +319,9 @@ for session in sessions:
 
     openApps = ttk.Combobox(root, state='readonly', values=Apps)
     openApps.bind("<<ComboboxSelected>>", lambda e: showCurrentHotkey())
-    openApps.current(0)
+
+    if Apps:
+        openApps.current(0)
     openApps.grid(row=1, column=0, pady=20)
 
 
@@ -350,5 +357,6 @@ root.bind("<Button-1>", takeFocus)
 root.bind("<Control-Alt-BackSpace>", sys.exit)
 
 readHotkeys()
-showCurrentHotkey()
+if Apps:
+    showCurrentHotkey()
 root.mainloop()
